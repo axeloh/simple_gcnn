@@ -41,17 +41,14 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
     x = data.x.to(device)
     targets = data.y.to(device)
 
-    train_mask = data.train_mask
+    train_mask = data.train_mask.to(device)
     start = time.time()
 
-    print(train_mask.is_cuda)
-    print(targets.is_cuda)
     for epoch in range(n_epochs):
         model.train()
         optimizer.zero_grad()
 
         out = model(x, A)
-        print(out.is_cuda)
         loss = F.cross_entropy(out[train_mask], targets[train_mask])
         loss.backward()
         optimizer.step()
@@ -199,8 +196,8 @@ if __name__ == '__main__':
 
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+
     if torch.cuda.is_available():
-        torch.cuda.set_device(1)
         model.cuda()
 
     train(model, optimizer, data, A, n_epochs=100, plot=True, device=device)
