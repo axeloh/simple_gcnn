@@ -186,7 +186,6 @@ if __name__ == '__main__':
     print(f'Num classes: {num_targets}')
 
     A = create_adjacency_matrix(num_nodes, data.edge_index, device=device)
-
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
