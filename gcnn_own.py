@@ -77,6 +77,23 @@ def train(model, optimizer, data, A, n_epochs, plot=False):
         plt.show()
 
 
+def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normalize=True, device=None):
+    """Creates adjacency matrix from pytorch_geometric edge_index"""
+    adj = torch.zeros((num_nodes, num_nodes))
+    edges = torch.stack((data.edge_index[0], data.edge_index[1]), 1)
+    for (source_i, target_i) in edges:
+        adj[source_i, target_i] = 1
+
+    if add_self_loops:
+        adj = adj + torch.eye(adj.size(0))
+
+    if normalize:
+        d = adj.sum(1)
+        adj = adj / d.view(-1, 1)
+
+    return adj.to(device)
+
+
 def get_acc_and_loss(data, model, A, type='train'):
     model.eval()
 
@@ -129,22 +146,23 @@ def print_info_about_dataset(dataset):
     except:
         print('Some prints failed.')
 
+def plot_dataset(dataset):
+    edges_raw = dataset.data.edge_index.numpy()
+    edges = [(x, y) for x, y in zip(edges_raw[0, :], edges_raw[1, :])]
+    labels = dataset.data.y.numpy()
 
-def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normalize=True, device=None):
-    """Creates adjacency matrix from pytorch_geometric edge_index"""
-    adj = torch.zeros((num_nodes, num_nodes))
-    edges = torch.stack((data.edge_index[0], data.edge_index[1]), 1)
-    for (source_i, target_i) in edges:
-        adj[source_i, target_i] = 1
+    G = nx.Graph()
+    G.add_nodes_from(list(range(np.max(edges_raw))))
+    G.add_edges_from(edges)
+    plt.subplot(111)
+    options = {
+        'node_size': 30,
+        'width': 0.2,
+    }
+    nx.draw(G, with_labels=False, node_color=labels.tolist(), cmap=plt.cm.tab10, font_weight='bold', **options)
+    plt.show()
 
-    if add_self_loops:
-        adj = adj + torch.eye(adj.size(0))
 
-    if normalize:
-        d = adj.sum(1)
-        adj = adj / d.view(-1, 1)
-
-    return adj.to(device)
 
 
 if __name__ == '__main__':
