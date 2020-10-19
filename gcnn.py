@@ -196,7 +196,7 @@ if __name__ == '__main__':
 
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
-    if device == 'cuda':
+    if device != 'cpu':
         model.cuda()
 
     train(model, optimizer, data, A, n_epochs=100, plot=True, device=device)
