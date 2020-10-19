@@ -85,19 +85,19 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
 
 def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normalize=True, device=None):
     """Creates adjacency matrix from pytorch_geometric edge_index"""
-    adj = torch.zeros((num_nodes, num_nodes))
+    adj = torch.zeros((num_nodes, num_nodes)).to(device)
     edges = torch.stack((edge_index[0], edge_index[1]), 1)
     for (source_i, target_i) in edges:
         adj[source_i, target_i] = 1
 
     if add_self_loops:
-        adj = adj + torch.eye(adj.size(0))
+        adj = adj + torch.eye(adj.size(0)).to(device)
 
     if normalize:
         d = adj.sum(1)
         adj = adj / d.view(-1, 1)
 
-    return adj.to(device)
+    return adj
 
 
 def get_acc_and_loss(data, model, A, type='train', device=None):
