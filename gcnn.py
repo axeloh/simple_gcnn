@@ -173,7 +173,7 @@ def plot_dataset(dataset):
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     print(f'Device: {device}')
 
@@ -192,7 +192,7 @@ if __name__ == '__main__':
 
     # data.train_mask = data.train_mask.to(device)
 
-    A = create_adjacency_matrix(num_nodes, data.edge_index)
+    A = create_adjacency_matrix(num_nodes, data.edge_index, device=device)
 
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
