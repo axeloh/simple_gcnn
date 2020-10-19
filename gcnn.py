@@ -174,7 +174,7 @@ def plot_dataset(dataset):
 
 if __name__ == '__main__':
 
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
     print(f'Device: {device}')
 
     dataset = Planetoid(root='/tmp/Cora', name='Cora')  # Cora, CiteSeer, or PubMed
