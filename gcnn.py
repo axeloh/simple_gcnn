@@ -105,21 +105,19 @@ def get_acc_and_loss(data, model, A, type='train', device=None):
 
     correct = 0
     out = model(data.x, A)
-    loss = F.cross_entropy(out[data.train_mask], data.y[data.train_mask]).item()
     pred = out.max(dim=1)[1]
 
     if type == 'train':
-        train_mask = data.train_mask.to(device)
-        correct += pred[train_mask].eq(data.y[train_mask]).sum().item()
-        acc = correct / (len(data.y[data.train_mask]))
+        mask = data.train_mask.to(device)
+
     elif type == 'val':
-        val_mask = data.val_mask.to(device)
-        correct += pred[val_mask].eq(data.y[val_mask]).sum().item()
-        acc = correct / (len(data.y[data.val_mask]))
+        mask = data.val_mask.to(device)
     else:
-        test_mask = data.test_mask.to(device)
-        correct += pred[test_mask].eq(data.y[test_mask]).sum().item()
-        acc = correct / (len(data.y[data.test_mask]))
+        mask = data.test_mask.to(device)
+
+    loss = F.cross_entropy(out[mask], data.y[mask]).item()
+    correct += pred[mask].eq(data.y[mask]).sum().item()
+    acc = correct / (len(data.y[mask]))
 
     return acc, loss
 
@@ -201,7 +199,7 @@ if __name__ == '__main__':
     if device == 'cuda':
         model.cuda()
 
-    train(model, optimizer, data, A, n_epochs=50, plot=True, device=device)
+    train(model, optimizer, data, A, n_epochs=100, plot=True, device=device)
 
-    test_acc, _ = get_acc_and_loss(data, model, A, type='test')
+    test_acc, _ = get_acc_and_loss(data, model, A, type='test', device=device)
     print(f'---- Accuracy on test set: {test_acc}')
