@@ -26,12 +26,20 @@ class GCNN(nn.Module):
     def __init__(self, in_dim, hid_dim=32, out_dim=10):
         super(GCNN, self).__init__()
         self.gconv1 = GrahpConv(in_channels=in_dim, out_channels=hid_dim)
-        self.gconv2 = GrahpConv(hid_dim, out_dim)
+        self.gconv2 = GrahpConv(hid_dim, hid_dim)
+        self.gconv3 = GrahpConv(hid_dim, hid_dim)
+        self.gconv4 = GrahpConv(hid_dim, out_dim)
 
     def forward(self, x, A):
         h = F.relu(self.gconv1(x, A))
         h = F.dropout(h, p=0.5, training=self.training)
-        h = self.gconv2(h, A)
+        h = F.relu(self.gconv2(h, A))
+        h = F.dropout(h, p=0.5, training=self.training)
+        h = F.relu(self.gconv3(h, A))
+        h = F.dropout(h, p=0.5, training=self.training)
+        h = self.gconv4(h, A)
+        h = F.dropout(h, p=0.5, training=self.training)
+
         return h
 
 
@@ -199,7 +207,7 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         model.cuda()
 
-    train(model, optimizer, data, A, n_epochs=100, plot=True, device=device)
+    train(model, optimizer, data, A, n_epochs=1000, plot=True, device=device)
 
     test_acc, _ = get_acc_and_loss(x, y, model, A, type='test', device=device)
     print(f'---- Accuracy on test set: {test_acc}')
