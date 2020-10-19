@@ -44,12 +44,15 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
     train_mask = data.train_mask.to(device)
     start = time.time()
 
+    print(train_mask.is_cuda)
+    print(targets.is_cuda)
     for epoch in range(n_epochs):
         model.train()
         optimizer.zero_grad()
 
         out = model(x, A)
-        loss = F.cross_entropy(out[train_mask].cpu(), targets[train_mask].cpu())
+        print(out.is_cuda)
+        loss = F.cross_entropy(out[train_mask], targets[train_mask])
         loss.backward()
         optimizer.step()
 
@@ -91,13 +94,13 @@ def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normaliz
         adj[source_i, target_i] = 1
 
     if add_self_loops:
-        adj = adj + torch.eye(adj.size(0)).to(device)
+        adj = adj + torch.eye(adj.size(0))
 
     if normalize:
         d = adj.sum(1)
         adj = adj / d.view(-1, 1)
 
-    return adj
+    return adj.to(device)
 
 
 def get_acc_and_loss(data, model, A, type='train', device=None):
