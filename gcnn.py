@@ -85,7 +85,7 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
 
 def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normalize=True, device=None):
     """Creates adjacency matrix from pytorch_geometric edge_index"""
-    adj = torch.zeros((num_nodes, num_nodes)).to(device)
+    adj = torch.zeros((num_nodes, num_nodes))
     edges = torch.stack((edge_index[0], edge_index[1]), 1)
     for (source_i, target_i) in edges:
         adj[source_i, target_i] = 1
