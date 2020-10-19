@@ -27,7 +27,6 @@ class GCNN(nn.Module):
         self.gconv1 = GrahpConv(in_channels=in_dim, out_channels=hid_dim)
         self.gconv2 = GrahpConv(hid_dim, out_dim)
 
-
     def forward(self, x, A):
         h = F.relu(self.gconv1(x, A))
         h = F.dropout(h, p=0.5, training=self.training)
@@ -35,11 +34,11 @@ class GCNN(nn.Module):
         return h
 
 
-def train(model, optimizer, data, A, n_epochs, plot=False):
+def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
     train_accuracies, val_accuracies = [], []
     train_losses, val_losses = [], []
-    x = data.x
-    targets = data.y
+    x = data.x.to(device)
+    targets = data.y.to(device)
     for epoch in range(n_epochs):
         model.train()
         optimizer.zero_grad()
@@ -114,6 +113,7 @@ def get_acc_and_loss(data, model, A, type='train'):
 
     return acc, loss
 
+
 def print_info_about_dataset(dataset):
     """ Expects dataset from torch_geometric.datasets"""
     try:
@@ -146,6 +146,7 @@ def print_info_about_dataset(dataset):
     except:
         print('Some prints failed.')
 
+
 def plot_dataset(dataset):
     edges_raw = dataset.data.edge_index.numpy()
     edges = [(x, y) for x, y in zip(edges_raw[0, :], edges_raw[1, :])]
@@ -163,11 +164,10 @@ def plot_dataset(dataset):
     plt.show()
 
 
-
-
 if __name__ == '__main__':
 
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    print(f'Device: {device}')
 
     dataset = Planetoid(root='/tmp/Cora', name='Cora')  # Cora, CiteSeer, or PubMed
     print(dataset.data)
@@ -185,6 +185,7 @@ if __name__ == '__main__':
     A = create_adjacency_matrix(num_nodes, data.edge_index)
 
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
+    model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
 
     train(model, optimizer, data, A, n_epochs=100, plot=True)
