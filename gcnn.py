@@ -53,8 +53,8 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
         loss.backward()
         optimizer.step()
 
-        train_acc, _ = get_acc_and_loss(data, model, A)
-        val_acc, val_loss = get_acc_and_loss(data, model, A, type='val')
+        train_acc, _ = get_acc_and_loss(data, model, A, device=device)
+        val_acc, val_loss = get_acc_and_loss(data, model, A, type='val', device=device)
 
         train_accuracies.append(train_acc)
         train_losses.append(loss.item())
