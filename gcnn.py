@@ -41,7 +41,7 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
     x = data.x.to(device)
     targets = data.y.to(device)
 
-    train_mask = data.train_mask.to(device)
+    train_mask = data.train_mask
     start = time.time()
 
     print(train_mask.is_cuda)
