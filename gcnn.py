@@ -106,18 +106,18 @@ def get_acc_and_loss(data, model, A, type='train', device=None):
     correct = 0
     out = model(data.x, A)
     pred = out.max(dim=1)[1]
+    targets = data.y.to(device)
 
     if type == 'train':
         mask = data.train_mask.to(device)
-
     elif type == 'val':
         mask = data.val_mask.to(device)
     else:
         mask = data.test_mask.to(device)
 
-    loss = F.cross_entropy(out[mask], data.y[mask]).item()
-    correct += pred[mask].eq(data.y[mask]).sum().item()
-    acc = correct / (len(data.y[mask]))
+    loss = F.cross_entropy(out[mask], targets[mask]).item()
+    correct += pred[mask].eq(targets[mask]).sum().item()
+    acc = correct / (len(targets[mask]))
 
     return acc, loss
 
