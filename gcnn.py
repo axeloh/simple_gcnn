@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 import sys
+import time
 
 
 class GrahpConv(nn.Module):
@@ -39,12 +40,16 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
     train_losses, val_losses = [], []
     x = data.x.to(device)
     targets = data.y.to(device)
+
+    train_mask = data.train_mask.to(device)
+    start = time.time()
+
     for epoch in range(n_epochs):
         model.train()
         optimizer.zero_grad()
 
         out = model(x, A)
-        loss = F.cross_entropy(out[data.train_mask], targets[data.train_mask])
+        loss = F.cross_entropy(out[train_mask], targets[train_mask])
         loss.backward()
         optimizer.step()
 
@@ -57,6 +62,8 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
         val_losses.append(val_loss)
 
         print(f'Epoch: {epoch}, Loss: {loss.item():.3f}, Train acc: {train_acc:.3f}, Val acc: {val_acc:.3f}', )
+
+    print(f'Training done in {(time.time() - start):.1f}s')
 
     if plot:
         plt.plot(train_losses, label="Train losses")
@@ -79,7 +86,7 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
 def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normalize=True, device=None):
     """Creates adjacency matrix from pytorch_geometric edge_index"""
     adj = torch.zeros((num_nodes, num_nodes))
-    edges = torch.stack((data.edge_index[0], data.edge_index[1]), 1)
+    edges = torch.stack((edge_index[0], edge_index[1]), 1)
     for (source_i, target_i) in edges:
         adj[source_i, target_i] = 1
 
@@ -93,7 +100,7 @@ def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normaliz
     return adj.to(device)
 
 
-def get_acc_and_loss(data, model, A, type='train'):
+def get_acc_and_loss(data, model, A, type='train', device=None):
     model.eval()
 
     correct = 0
@@ -102,13 +109,16 @@ def get_acc_and_loss(data, model, A, type='train'):
     pred = out.max(dim=1)[1]
 
     if type == 'train':
-        correct += pred[data.train_mask].eq(data.y[data.train_mask]).sum().item()
+        train_mask = data.train_mask.to(device)
+        correct += pred[train_mask].eq(data.y[train_mask]).sum().item()
         acc = correct / (len(data.y[data.train_mask]))
     elif type == 'val':
-        correct += pred[data.val_mask].eq(data.y[data.val_mask]).sum().item()
+        val_mask = data.val_mask.to(device)
+        correct += pred[val_mask].eq(data.y[val_mask]).sum().item()
         acc = correct / (len(data.y[data.val_mask]))
     else:
-        correct += pred[data.test_mask].eq(data.y[data.test_mask]).sum().item()
+        test_mask = data.test_mask.to(device)
+        correct += pred[test_mask].eq(data.y[test_mask]).sum().item()
         acc = correct / (len(data.y[data.test_mask]))
 
     return acc, loss
@@ -177,18 +187,21 @@ if __name__ == '__main__':
     num_nodes = data.num_nodes
     num_features = dataset.num_node_features
 
-    x = data.x  # Node features
-    y = data.y  # Node classes
+    x = data.x.to(device)  # Node features
+    y = data.y.to(device)  # Node classes
     num_targets = len(torch.unique(y))
-    print(num_targets)
+    print(f'Num classes: {num_targets}')
+
+    # data.train_mask = data.train_mask.to(device)
 
     A = create_adjacency_matrix(num_nodes, data.edge_index)
 
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
-    model = model.to(device)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
+    if device == 'cuda':
+        model.cuda()
 
-    train(model, optimizer, data, A, n_epochs=100, plot=True)
+    train(model, optimizer, data, A, n_epochs=50, plot=True, device=device)
 
     test_acc, _ = get_acc_and_loss(data, model, A, type='test')
     print(f'---- Accuracy on test set: {test_acc}')
