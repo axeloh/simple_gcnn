@@ -1,14 +1,10 @@
-from abc import ABC
-
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-from torch_geometric.datasets import TUDataset, Planetoid, KarateClub, MNISTSuperpixels
+from torch_geometric.datasets import Planetoid
 import networkx as nx
 import matplotlib.pyplot as plt
 import numpy as np
-from tqdm import tqdm
-import sys
 import time
 
 
@@ -26,20 +22,12 @@ class GCNN(nn.Module):
     def __init__(self, in_dim, hid_dim=32, out_dim=10):
         super(GCNN, self).__init__()
         self.gconv1 = GrahpConv(in_channels=in_dim, out_channels=hid_dim)
-        self.gconv2 = GrahpConv(hid_dim, hid_dim)
-        self.gconv3 = GrahpConv(hid_dim, hid_dim)
-        self.gconv4 = GrahpConv(hid_dim, out_dim)
+        self.gconv2 = GrahpConv(hid_dim, out_dim)
 
     def forward(self, x, A):
         h = F.relu(self.gconv1(x, A))
         h = F.dropout(h, p=0.5, training=self.training)
-        h = F.relu(self.gconv2(h, A))
-        h = F.dropout(h, p=0.5, training=self.training)
-        h = F.relu(self.gconv3(h, A))
-        h = F.dropout(h, p=0.5, training=self.training)
-        h = self.gconv4(h, A)
-        h = F.dropout(h, p=0.5, training=self.training)
-
+        h = self.gconv2(h, A)
         return h
 
 
@@ -180,8 +168,8 @@ def plot_dataset(dataset):
 
 
 if __name__ == '__main__':
-    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     print(f'Device: {device}')
 
     dataset = Planetoid(root='/tmp/Cora', name='Cora')  # Cora, CiteSeer, or PubMed
@@ -197,8 +185,6 @@ if __name__ == '__main__':
     num_targets = len(torch.unique(y))
     print(f'Num classes: {num_targets}')
 
-    # data.train_mask = data.train_mask.to(device)
-
     A = create_adjacency_matrix(num_nodes, data.edge_index, device=device)
 
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
@@ -207,7 +193,7 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         model.cuda()
 
-    train(model, optimizer, data, A, n_epochs=1000, plot=True, device=device)
+    train(model, optimizer, data, A, n_epochs=100, plot=True, device=device)
 
     test_acc, _ = get_acc_and_loss(x, y, model, A, type='test', device=device)
     print(f'---- Accuracy on test set: {test_acc}')
