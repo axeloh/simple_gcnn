@@ -53,8 +53,8 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
         loss.backward()
         optimizer.step()
 
-        train_acc, _ = get_acc_and_loss(data, model, A, device=device)
-        val_acc, val_loss = get_acc_and_loss(data, model, A, type='val', device=device)
+        train_acc, _ = get_acc_and_loss(x, targets, model, A, device=device)
+        val_acc, val_loss = get_acc_and_loss(x, targets, model, A, type='val', device=device)
 
         train_accuracies.append(train_acc)
         train_losses.append(loss.item())
@@ -100,13 +100,12 @@ def create_adjacency_matrix(num_nodes, edge_index, add_self_loops=True, normaliz
     return adj.to(device)
 
 
-def get_acc_and_loss(data, model, A, type='train', device=None):
+def get_acc_and_loss(x, targets, model, A, type='train', device=None):
     model.eval()
 
     correct = 0
-    out = model(data.x, A)
+    out = model(x, A)
     pred = out.max(dim=1)[1]
-    targets = data.y.to(device)
 
     if type == 'train':
         mask = data.train_mask.to(device)
@@ -202,5 +201,5 @@ if __name__ == '__main__':
 
     train(model, optimizer, data, A, n_epochs=100, plot=True, device=device)
 
-    test_acc, _ = get_acc_and_loss(data, model, A, type='test', device=device)
+    test_acc, _ = get_acc_and_loss(x, y, model, A, type='test', device=device)
     print(f'---- Accuracy on test set: {test_acc}')
