@@ -49,7 +49,7 @@ def train(model, optimizer, data, A, n_epochs, plot=False, device=None):
         optimizer.zero_grad()
 
         out = model(x, A)
-        loss = F.cross_entropy(out[train_mask], targets[train_mask])
+        loss = F.cross_entropy(out[train_mask].cpu(), targets[train_mask].cpu())
         loss.backward()
         optimizer.step()
 
@@ -174,8 +174,6 @@ def plot_dataset(dataset):
 
 if __name__ == '__main__':
     device = torch.device('cuda:1' if torch.cuda.is_available() else 'cpu')
-    if torch.cuda.is_available():
-        torch.cuda.set_device(1)
 
     print(f'Device: {device}')
 
@@ -198,9 +196,9 @@ if __name__ == '__main__':
 
     model = GCNN(num_features, hid_dim=16, out_dim=num_targets)
     optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=5e-4)
-    #if device != torch.device('cpu'):
-     #   model.cuda()
-    model.cuda()
+    if torch.cuda.is_available():
+        torch.cuda.set_device(1)
+        model.cuda()
 
     train(model, optimizer, data, A, n_epochs=100, plot=True, device=device)
 
